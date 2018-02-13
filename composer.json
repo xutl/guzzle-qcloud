@@ -1,0 +1,31 @@
+{
+  "name": "xutl/guzzle-qcloud",
+  "description": "Qcloud php sdk",
+  "keywords": [
+    "qcloud",
+    "guzzle-qcloud",
+    "guzzle",
+    "guzzlehttp"
+  ],
+  "type": "library",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "xutongle",
+      "email": "xutongle@gmail.com"
+    }
+  ],
+  "require": {
+    "guzzlehttp/guzzle": "~6.0"
+  },
+  "autoload": {
+    "psr-4": {
+      "xutl\\guzzle\\qcloud\\": "src"
+    }
+  },
+  "extra": {
+    "branch-alias": {
+      "dev-master": "1.0-dev"
+    }
+  }
+}
