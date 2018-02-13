@@ -60,32 +60,22 @@ class Subscriber
         $request->withAddedHeader('User-Agent', default_user_agent());
         if ($request->getMethod() == 'GET') {
             $params = \GuzzleHttp\Psr7\parse_query($request->getUri()->getQuery());
-            $request->withUri($request->getUri()->withQuery($this->makeParams($request, $params)));
         } else if ($request->getMethod() == 'POST') {
             $params = \GuzzleHttp\Psr7\parse_query($request->getBody()->getContents());
-            $request->withBody(\GuzzleHttp\Psr7\stream_for($this->makeParams($request, $params)));
+        } else {
+            return $request;
         }
-        return $request;
-    }
 
-    /**
-     * 组装参数
-     * @param RequestInterface $request
-     * @param array $params
-     * @return string
-     */
-    public function makeParams(RequestInterface $request, array $params)
-    {
         $params['SecretId'] = $this->config['secretId'];
         $params['Nonce'] = uniqid();
         $params['Timestamp'] = time();
-        $params['RequestClient'] = default_user_agent();
+        $params['RequestClient'] = 'GuzzleHttp';
         $params['SignatureMethod'] = $this->config['signatureMethod'];
         if (!empty($this->config['region']) && !isset($params['Region'])) {
             $params['Region'] = $this->config['region'];
         }
         ksort($params);
-        $url = str_replace(['http://', 'https://'], '', $request->getUri());
+        $url = $request->getUri()->getHost() . $request->getUri()->getPath();
         $i = 0;
         foreach ($params as $key => $val) {
             if ($key == 'Signature' || ($request->getMethod() == 'POST' && substr($val, 0, 1) == '@')) {
@@ -106,6 +96,15 @@ class Subscriber
         } elseif ($this->config['signatureMethod'] == self::SIGNATURE_METHOD_HMAC_SHA1) {
             $params['Signature'] = base64_encode(hash_hmac('sha1', $plainText, $this->config['secretKey'], true));
         }
-        return \GuzzleHttp\Psr7\build_query($params);
+        $query = \GuzzleHttp\Psr7\build_query($params);
+        if ($request->getMethod() == 'GET') {
+            $request = $request->withUri($request->getUri()->withQuery($query));
+        } else if ($request->getMethod() == 'POST') {
+            $body = \GuzzleHttp\Psr7\stream_for($query);
+            $request = $request->withBody($body);
+        } else {
+            return $request;
+        }
+        return $request;
     }
 }
